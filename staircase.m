@@ -27,6 +27,8 @@ classdef staircase < handle
         curWrong
         verbose
         reversals
+        ceilingBehaviour
+        requestedStartLevel
     end
 
     properties (Dependent) % these are defined dynamically (see below)
@@ -44,7 +46,8 @@ classdef staircase < handle
         % class constructor function is staircase(...)
         function sc = staircase(levels, initStepSize, stepSize, ...
                                 rightRule, wrongRule, maxTrials, ...
-                                maxRevs, startLevel, verbose)
+                                maxRevs, startLevel, verbose,   ...
+                                ceilingBehaviour)
             if (nargin > 0)
                 sc.levels       = levels;       % staircase levels
                 sc.initStepSize = initStepSize; % step size before 1st rev
@@ -62,7 +65,17 @@ classdef staircase < handle
                 sc.curRight     = 0; % number of right responses
                 sc.curWrong     = 0; % number of wrong responses
                 sc.reversals    = [];
-                sc.setToNearestLevel(startLevel);
+                sc.requestedStartLevel = startLevel;
+                sc.setToNearestLevel(sc.requestedStartLevel);
+                if nargin < 10
+                    sc.ceilingBehaviour = 'limiting';
+                else
+                    if strcmp(ceilingBehaviour, 'limiting') || strcmp(ceilingBehaviour, 'resetting')
+                        sc.ceilingBehaviour = ceilingBehaviour;
+                    else
+                        error('Invalid ceiling behaviour, must be "limiting" or "resetting"')
+                    end
+                end
             end
             if sc.verbose
                 fprintf('\nStaircase class object initialised.\n')
@@ -187,14 +200,30 @@ classdef staircase < handle
             end
 
             if sc.curLevel > sc.maxLevel     % keep staircase level
-                sc.curLevel = sc.maxLevel;   % within limits
-                if sc.verbose
-                    fprintf('Max exceeded, bound at %0.0f.\n', sc.curLevel)
+                switch sc.ceilingBehaviour
+                    case 'limiting'
+                        sc.curLevel = sc.maxLevel;   % within limits
+                        if sc.verbose
+                            fprintf('Max exceeded, bound at %0.0f.\n', sc.curLevel)
+                        end
+                    case 'resetting'
+                        sc.setToNearestLevel(sc.requestedStartLevel);
+                        if sc.verbose
+                            fprintf('Max exceeded, resetting to %0.2f.\n', sc.requestedStartLevel)
+                        end
                 end
             elseif sc.curLevel < sc.minLevel
-                sc.curLevel = sc.minLevel;
-                if sc.verbose
-                    fprintf('Min exceeded, bound at %0.0f.\n', sc.curLevel)
+                switch sc.ceilingBehaviour
+                    case 'limiting'
+                        sc.curLevel = sc.minLevel;
+                        if sc.verbose
+                            fprintf('Min exceeded, bound at %0.0f.\n', sc.curLevel)
+                        end
+                    case 'resetting'
+                        sc.setToNearestLevel(sc.requestedStartLevel);
+                        if sc.verbose
+                            fprintf('Min exceeded, resetting to %0.2f.\n', sc.requestedStartLevel)
+                        end
                 end
             else
                 if sc.verbose

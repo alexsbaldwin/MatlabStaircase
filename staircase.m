@@ -29,6 +29,9 @@ classdef staircase < handle
         reversals
         ceilingBehaviour
         requestedStartLevel
+        didJustReverse
+        numCeilingIncrements
+        maxCeilingIncrements
     end
 
     properties (Dependent) % these are defined dynamically (see below)
@@ -47,8 +50,9 @@ classdef staircase < handle
         function sc = staircase(levels, initStepSize, stepSize, ...
                                 rightRule, wrongRule, maxTrials, ...
                                 maxRevs, startLevel, verbose,   ...
-                                ceilingBehaviour)
+                                ceilingBehaviour, maxCeilingIncrements)
             if (nargin > 0)
+                % set by inputs
                 sc.levels       = levels;       % staircase levels
                 sc.initStepSize = initStepSize; % step size before 1st rev
                 sc.stepSize     = stepSize;     % subsequent step size
@@ -57,15 +61,20 @@ classdef staircase < handle
                 sc.maxTrials    = maxTrials;    % max trials to terminate
                 sc.maxRevs      = maxRevs;      % max revs to terminate
                 sc.verbose      = verbose;      % 1 for console output
-                sc.nTrials      = zeros(sc.nLevels,1);
-                sc.nCorrect     = zeros(sc.nLevels,1);
-                sc.trialCount   = 0;
-                sc.revCount     = 0;
-                sc.curDirection = 0;
-                sc.curRight     = 0; % number of right responses
-                sc.curWrong     = 0; % number of wrong responses
-                sc.reversals    = [];
                 sc.requestedStartLevel = startLevel;
+                
+                % initialised to zero/empty
+                sc.nTrials        = zeros(sc.nLevels,1);
+                sc.nCorrect       = zeros(sc.nLevels,1);
+                sc.trialCount     = 0;
+                sc.revCount       = 0;
+                sc.curDirection   = 0;
+                sc.curRight       = 0; % number of right responses
+                sc.curWrong       = 0; % number of wrong responses
+                sc.didJustReverse = 0;
+                sc.numCeilingIncrements = 0;
+                sc.reversals      = [];
+                
                 sc.setToNearestLevel(sc.requestedStartLevel);
                 if nargin < 10
                     sc.ceilingBehaviour = 'limiting';
@@ -75,6 +84,12 @@ classdef staircase < handle
                     else
                         error('Invalid ceiling behaviour, must be "limiting" or "resetting"')
                     end
+                end
+                
+                if nargin < 11
+                    sc.maxCeilingIncrements = inf;
+                else
+                    sc.maxCeilingIncrements = maxCeilingIncrements;
                 end
             end
             if sc.verbose
@@ -109,7 +124,8 @@ classdef staircase < handle
         function isFinished = get.isFinished(sc) % check if finished
             isDoneRevs   = sc.revCount>=sc.maxRevs;
             isDoneTrials = sc.trialCount>=sc.maxTrials;
-        	isFinished   = isDoneRevs||isDoneTrials;
+            isDoneCeilingReversals = sc.numCeilingIncrements>=sc.maxCeilingIncrements;
+        	isFinished   = isDoneRevs||isDoneTrials||isDoneCeilingReversals;
         end
 
         function curReversalThresh = get.curReversalThresh(sc)
@@ -130,6 +146,7 @@ classdef staircase < handle
 
         function sc = doResp(sc, isCorrect)
            sc.trialInc;
+           sc.didJustReverse = 0;
            switch isCorrect
                 case 0
                     sc.curWrong = sc.curWrong + 1;
@@ -200,16 +217,17 @@ classdef staircase < handle
             end
 
             if sc.curLevel > sc.maxLevel     % keep staircase level
+                sc.numCeilingIncrements = sc.numCeilingIncrements + 1;
                 switch sc.ceilingBehaviour
                     case 'limiting'
                         sc.curLevel = sc.maxLevel;   % within limits
                         if sc.verbose
-                            fprintf('Max exceeded, bound at %0.0f.\n', sc.curLevel)
+                            fprintf('Max exceeded %0.0f time(s), bound at %0.0f.\n', sc.numCeilingIncrements, sc.curLevel)
                         end
                     case 'resetting'
                         sc.setToNearestLevel(sc.requestedStartLevel);
                         if sc.verbose
-                            fprintf('Max exceeded, resetting to %0.2f.\n', sc.requestedStartLevel)
+                            fprintf('Max exceeded %0.0f time(s), resetting to %0.2f.\n', sc.numCeilingIncrements, sc.requestedStartLevel)
                         end
                 end
             elseif sc.curLevel < sc.minLevel
@@ -243,7 +261,8 @@ classdef staircase < handle
                 fprintf('Reversal, %0.0f to %0.0f, revCount = %0.0f, revThresh = %0.1f +/- %0.1f\n', ...
                         sc.curDirection, newDir, sc.revCount, sc.curReversalThresh, sc.curReversalError)
             end
-            sc.curDirection = newDir;
+            sc.curDirection   = newDir;
+            sc.didJustReverse = 1;
         end
 
     end

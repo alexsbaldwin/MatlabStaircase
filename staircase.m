@@ -32,6 +32,7 @@ classdef staircase < handle
         didJustReverse
         numCeilingIncrements
         maxCeilingIncrements
+        reversalDirections
     end
 
     properties (Dependent) % these are defined dynamically (see below)
@@ -64,8 +65,8 @@ classdef staircase < handle
                 sc.requestedStartLevel = startLevel;
                 
                 % initialised to zero/empty
-                sc.nTrials        = zeros(sc.nLevels,1);
-                sc.nCorrect       = zeros(sc.nLevels,1);
+                sc.nTrials        = zeros(1,sc.nLevels);
+                sc.nCorrect       = zeros(1,sc.nLevels);
                 sc.trialCount     = 0;
                 sc.revCount       = 0;
                 sc.curDirection   = 0;
@@ -73,7 +74,8 @@ classdef staircase < handle
                 sc.curWrong       = 0; % number of wrong responses
                 sc.didJustReverse = 0;
                 sc.numCeilingIncrements = 0;
-                sc.reversals      = [];
+                sc.reversals            = [];
+                sc.reversalDirections   = [];
                 
                 sc.setToNearestLevel(sc.requestedStartLevel);
                 if nargin < 10
@@ -256,7 +258,8 @@ classdef staircase < handle
 
         function sc = doReversal(sc, newDir) % count reversal and
         	sc.revCount = sc.revCount + 1;   % change direction
-            sc.reversals(end+1) = sc.curLevel;
+            sc.reversals(end+1)          = sc.curLevel;
+            sc.reversalDirections(end+1) = newDir;
             if sc.verbose
                 fprintf('Reversal, %0.0f to %0.0f, revCount = %0.0f, revThresh = %0.1f +/- %0.1f\n', ...
                         sc.curDirection, newDir, sc.revCount, sc.curReversalThresh, sc.curReversalError)

@@ -45,7 +45,7 @@ while ~sc.isFinished           % keep looping until staircase concludes
 end
 
 % export data table from staircase object into a csv file
-csvFileName = 'staircase_sim_output_table.csv';
+csvFileName = 'demo_1_staircase_sim_output_table.csv';
 csvF = fopen(csvFileName, 'w');
 fprintf(csvF, 'logLev,nTrials,nCorrect');
 for i = 1:length(sc.levels)

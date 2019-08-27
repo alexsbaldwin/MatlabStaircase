@@ -4,7 +4,7 @@ function demo_3_psychometric_function
 % oriented psychophysical staircase. Requires staircase.m class definition 
 % file to be in same folder or on Matlab path. Also requires the Palamedes
 % toolbox for function fitting, available from www.palamedestoolbox.org.
-% This minimal example shows use of staircase in a simulated 2AFC task. The
+% This minimal example shows use of staircase in a simulated NAFC task. The
 % intensity units are given in dB, as might be used for contrast detection.
 % N.B. it is likely that fits to individual simulation runs will be
 % unstable (Palamedes will warn of bootstrap fits not converging), a method

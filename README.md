@@ -1,4 +1,4 @@
-# MatlabStaircase
+# MatlabStaircase: Object-oriented psychophysical staircase procedure for Matlab/Octave
 ## Alex S Baldwin, McGill Vision Research
 Object-oriented psychophysical staircase procedure for Matlab/Octave.
 
